@@ -164,7 +164,7 @@
         kubeadm: "{{hostvars[groups['master'][0]].kubeadm_cmd}}"
     - debug: msg="Output {{kubeadm}}"
     - name: Join to master
-      command: "{{kubeadm}}"
+      command: "{{kubeadm}} --skip-preflight-checks"
 
 - hosts: master
   remote_user: ubuntu
