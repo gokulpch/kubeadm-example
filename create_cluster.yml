@@ -142,6 +142,15 @@
     - set_fact:
         kubeadm_cmd: "{{output_kubeadm.stdout}}"
     - debug: msg="Output {{kubeadm_cmd}}"
+    
+    - name: Copy credentials to run kubectl
+      shell: "sudo cp /etc/kubernetes/admin.conf $HOME/"
+    
+    - name: Chown Admin.conf
+      shell: "sudo chown $(id -u):$(id -g) $HOME/admin.conf"
+    
+    - name: Export Config
+      shell: "export KUBECONFIG=$HOME/admin.conf"
 
     - name: Use master as a minion too
       command: kubectl taint nodes --all dedicated-
