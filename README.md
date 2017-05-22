@@ -10,8 +10,6 @@ Implementation of
 
 http://kubernetes.io/docs/getting-started-guides/kubeadm/
 
-Not generic at all (I may expand it to make it more generic).
-
 ## Requirements
 
 ```
