@@ -75,7 +75,7 @@
       region: us-west-2
       key_name: k8s-keypair
       instance_type: t2.micro
-      image: 	ami-efd0428f
+      image:  ami-efd0428f
       wait: yes
       group: "K8s security group"
       count: 2
@@ -143,19 +143,6 @@
         kubeadm_cmd: "{{output_kubeadm.stdout}}"
     - debug: msg="Output {{kubeadm_cmd}}"
 
-#- hosts: master
-#  remote_user: root
-#  become: true
-#  tasks:
-
-#    - name: Copy credentials to run kubectl
-#      shell: "cp /etc/kubernetes/admin.conf $HOME/"
-
-#    - name: Chown Admin.conf
-#      shell: "chown $(id -u):$(id -g) $HOME/admin.conf"
-#      environment:
-#        KUBECONFIG: $HOME/admin.conf
-
 - hosts: minions
   remote_user: ubuntu
   become: true
@@ -172,8 +159,40 @@
   become: true
   tasks:
 
+    - name: Transfer the script
+      copy: src=/root/kubeadm-example/ansible.cfg dest=/home/ubuntu mode=0777
+
+
+- hosts: master
+  remote_user: ubuntu
+  become: true
+  tasks:
+
+    - name: Copy credentials to run kubectl
+      shell: sudo cp /etc/kubernetes/admin.conf /home/ubuntu/
+
+    - name: Chown Admin.conf
+      shell: sudo chown ubuntu:ubuntu /home/ubuntu/admin.conf
+
+    - name: Set ENV
+      shell: sudo echo export KUBECONFIG=/home/ubuntu/admin.conf>>/home/ubuntu/.profile
+
+#    - name: Source ENV
+#      command: source /home/ubuntu/.profile
+
     - name:  Installing a pod network cluster role binding
       command: kubectl create -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel-rbac.yml
 
     - name:  Installing a pod network
       command: kubectl create -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+#- hosts: master
+#  remote_user: ubuntu
+#  become: true
+#  tasks:
+
+#    - name:  Installing a pod network cluster role binding
+#      command: kubectl create -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel-rbac.yml
+
+#   - name:  Installing a pod network
+#     command: kubectl create -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml

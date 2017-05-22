@@ -3,7 +3,7 @@
   - name: Create a new keypair
     ec2_key:
       name: k8s-keypair
-      region: eu-west-1
+      region: us-west-2
     register: ec2_key
 
   - name: save private key

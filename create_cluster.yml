@@ -75,7 +75,7 @@
       region: us-west-2
       key_name: k8s-keypair
       instance_type: t2.micro
-      image: 	ami-844e0bf7
+      image:  ami-efd0428f
       wait: yes
       group: "K8s security group"
       count: 2
@@ -136,24 +136,12 @@
   tasks:
 
     - name: Launch kubeadm in master
-      shell: "kubeadm init --apiserver-advertise-address {{ ansible_eth0.ipv4.address }} |grep 'kubeadm join'"
+      shell: "kubeadm init --apiserver-advertise-address {{ ansible_eth0.ipv4.address }} --skip-preflight-checks |grep 'kubeadm join'"
       register: output_kubeadm
 
     - set_fact:
         kubeadm_cmd: "{{output_kubeadm.stdout}}"
     - debug: msg="Output {{kubeadm_cmd}}"
-    
-    - name: Copy credentials to run kubectl
-      shell: "sudo cp /etc/kubernetes/admin.conf $HOME/"
-    
-    - name: Chown Admin.conf
-      shell: "sudo chown $(id -u):$(id -g) $HOME/admin.conf"
-    
-    - name: Export Config
-      shell: "export KUBECONFIG=$HOME/admin.conf"
-
-    - name: Use master as a minion too
-      command: kubectl taint nodes --all dedicated-
 
 - hosts: minions
   remote_user: ubuntu
@@ -171,5 +159,20 @@
   become: true
   tasks:
 
+    - name: Transfer the script
+      copy: src=/root/kubeadm-example/set_auth_kubeconfig.sh dest=/home/ubuntu mode=0777
+
+    - name: Execute the script
+      command: bash /home/ubuntu/set_auth_kubeconfig.sh
+
+
+- hosts: master
+  remote_user: ubuntu
+  become: true
+  tasks:
+
+    - name:  Installing a pod network cluster role binding
+      command: kubectl --kubeconfig /home/ubuntu/admin.conf create -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel-rbac.yml
+
     - name:  Installing a pod network
-      command: kubectl apply -f https://git.io/weave-kube
+      command: kubectl --kubeconfig /home/ubuntu/admin.conf create -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
