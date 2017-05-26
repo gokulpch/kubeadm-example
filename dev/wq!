@@ -92,8 +92,7 @@
       instance_tags:
         Name: "{{ name_tag1 }}"
       volumes:
-      - device_name: /dev/xvda
-        volume_type: gp2
+      - device_name: /dev/sda1
         volume_size: 40
       assign_public_ip: yes
     register: ec2
@@ -119,8 +118,7 @@
       instance_tags:
         Name: "{{ name_tag2 }}"
       volumes:
-      - device_name: /dev/xvda
-        volume_type: gp2
+      - device_name: /dev/sda1
         volume_size: 40
       assign_public_ip: yes
     register: ec2

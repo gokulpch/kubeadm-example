@@ -92,8 +92,7 @@
       instance_tags:
         Name: "{{ name_tag1 }}"
       volumes:
-      - device_name: /dev/xvda
-        volume_type: gp2
+      - device_name: /dev/sda1
         volume_size: 40
       assign_public_ip: yes
     register: ec2
@@ -119,8 +118,7 @@
       instance_tags:
         Name: "{{ name_tag2 }}"
       volumes:
-      - device_name: /dev/xvda
-        volume_type: gp2
+      - device_name: /dev/sda1
         volume_size: 40
       assign_public_ip: yes
     register: ec2
@@ -208,4 +206,39 @@
   tasks:
 
     - name: Install Contrail
-      command: "cd /root/contrail-ansible/playbooks;  ansible-playbook  -i inventory/my-inventory site.yml"
+      script: ./execute_ansible.sh
+
+- hosts: master
+  remote_user: ubuntu
+  become: true
+  tasks:
+
+    - name: Launch kubeadm in master
+      shell: "kubeadm init --apiserver-advertise-address {{ ansible_eth0.ipv4.address }} --skip-preflight-checks |grep 'kubeadm join'"
+      register: output_kubeadm
+
+    - set_fact:
+        kubeadm_cmd: "{{output_kubeadm.stdout}}"
+    - debug: msg="Output {{kubeadm_cmd}}"
+
+- hosts: minions
+  remote_user: ubuntu
+  become: true
+  tasks:
+
+    - set_fact:
+        kubeadm: "{{hostvars[groups['master'][0]].kubeadm_cmd}}"
+    - debug: msg="Output {{kubeadm}}"
+    - name: Join to master
+      command: "{{kubeadm}} --skip-preflight-checks"
+
+- hosts: master
+  remote_user: ubuntu
+  become: true
+  tasks:
+
+    - name: Transfer the script
+      copy: src=/root/kubeadm-example/set_auth_kubeconfig.sh dest=/home/ubuntu mode=0777
+
+    - name: Execute the script
+      command: bash /home/ubuntu/set_auth_kubeconfig.sh
