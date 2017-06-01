@@ -288,6 +288,3 @@
       
     - name: Get Kubernetes Dashboard YAML
       script: ./create_K8S_dashboard.sh
-
-    - name: Create Kubernetes Dashboard
-      command: kubectl create -f K8Sdashboard.yaml
